@@ -1,40 +1,65 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const { MongoClient } = require('mongodb');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-// Middleware to parse URL-encoded bodies (as sent by HTML forms)
-app.use(bodyParser.urlencoded({ extended: true }));
+// MongoDB Configuration
+const uri = "mongodb://localhost:27017";
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-// Set the view engine to EJS
-app.set('view engine', 'ejs');
-
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Hardcoded user credentials for simplicity
-const user = {
-    username: 'admin',
-    password: 'password'
-};
-
-// Route for the login page
-app.get('/', (req, res) => {
-    res.render('login');
+let db;
+client.connect(err => {
+  if (err) throw err;
+  db = client.db('myApp');
+  console.log("Connected to MongoDB");
 });
 
-// Route to handle login form submission
+// Express Configuration
+app.use(bodyParser.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static('public'));
+
+// Route for the Home Page
+app.get('/', (req, res) => {
+  res.render('login');
+});
+
+// Route for the Login Page
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+// Route for the Registration Page
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+// Handle Login
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    if (username === user.username && password === user.password) {
-        res.render('home', { username });
+  const { email, password } = req.body;
+  db.collection('users').findOne({ email, password }, (err, user) => {
+    if (err) throw err;
+    if (user) {
+      res.send('Login successful');
     } else {
-        res.render('login', { error: 'Invalid username or password' });
+      res.send('Login failed');
     }
+  });
+});
+
+// Handle Registration
+app.post('/register', (req, res) => {
+  const { name, email, password } = req.body;
+  db.collection('users').insertOne({ name, email, password }, (err, result) => {
+    if (err) throw err;
+    res.render('successful');
+  });
 });
 
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });

@@ -1,0 +1,16 @@
+# Arquivos gerados pelo sistema operacional
+.DS_Store
+
+# Pastas específicas de IDEs
+.idea/
+.vscode/
+
+# Dependências do Node.js
+node_modules/
+
+# Arquivo de configuração de variáveis de ambiente
+.env
+
+# Arquivos de log
+logs/
+*.log
